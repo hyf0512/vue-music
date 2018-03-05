@@ -24,12 +24,14 @@
         <div class="bottom">
           <div class="progress-wrapper">
             <span class="time time-l">{{format(currentTime)}}</span>
-            <div class="progress-bar-wrapper"></div>
+            <div class="progress-bar-wrapper">
+              <progress-bar :percent="percent" @percentChange="onProgressBarChange"></progress-bar>
+            </div>
             <span class="time time-r">{{format(currentSong.duration)}}</span>
           </div>
           <div class="operators">
-            <div class="icon i-left">
-              <i class="icon-sequence"></i>
+            <div class="icon i-left" @click="changeMode">
+              <i :class="iconMode"></i>
             </div>
             <div class="icon i-left" :class="disableCls">
               <i @click="prev" class="icon-prev"></i>
@@ -57,14 +59,16 @@
           <p class="desc" v-html="currentSong.singer"></p>
         </div>
         <div class="control">
-          <i @click.stop.prevent="togglePlaying" :class="miniIcon"></i>
+          <progress-circle :radius="radius" :percent="percent">
+            <i @click.stop.prevent="togglePlaying" :class="miniIcon" class="icon-mini"></i>
+          </progress-circle>
         </div>
         <div class="control">
           <i class="icon-playlist"></i>
         </div>
       </div>
     </transition>
-    <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime"></audio>
+    <audio ref="audio" :src="currentSong.url" @canplay="ready" @error="error" @timeupdate="updateTime" @ended="end"></audio>
     </div>
 </template>
 
@@ -72,13 +76,18 @@
   import {mapGetters, mapMutations} from 'vuex'
   import animations from 'create-keyframe-animation'
   import {prefixStyle} from '@/common/js/dom'
+  import ProgressBar from '@/base/progress-bar/progress-bar'
+  import ProgressCircle from '@/base/progress-circle/progress-circle'
+  import {playMode} from '@/common/js/config'
+  import {shuffle} from '@/common/js/util'
 
   const transform = prefixStyle('transform')
   export default {
     data() {
       return {
         songReady: false,
-        currentTime: 0
+        currentTime: 0,
+        radius: 32
       }
     },
     computed: {
@@ -88,18 +97,26 @@
       playIcon() {
         return this.playing ? 'icon-pause' : 'icon-play'
       },
+      iconMode() {
+        return this.mode === playMode.sequence ? 'icon-sequence' : this.mode === playMode.loop ? 'icon-loop' : 'icon-random'
+      },
       miniIcon() {
         return this.playing ? 'icon-pause-mini' : 'icon-play-mini'
       },
       disableCls() {
         return this.songReady ? '' : 'disable'
       },
+      percent() {
+        return this.currentTime / this.currentSong.duration
+      },
       ...mapGetters([
         'fullScreen',
         'playlist',
         'currentSong',
         'playing',
-        'currentIndex'
+        'currentIndex',
+        'mode',
+        'sequenceList'
         ])
     },
     methods: {
@@ -148,6 +165,17 @@
       togglePlaying() {
         this.setPlayingState(!this.playing)
       },
+      end() {
+        if (this.mode === playMode.loop) {
+          this.loop()
+        } else {
+          this.next()
+        }
+      },
+      loop() {
+        this.$refs.audio.currentTime = 0
+        this.$refs.audio.play()
+      },
       next() {
         if (!this.songReady) {
           return
@@ -191,7 +219,32 @@
         const second = this._pad(interval % 60)
         return `${minute}:${second}`
       },
-      _pad(num, n=2) {
+      onProgressBarChange(percent) {
+        console.log(percent)
+        this.$refs.audio.currentTime = this.currentSong.duration * percent
+        if (!this.playing) {
+          this.togglePlaying()
+        }
+      },
+      changeMode() {
+        const mode = (this.mode + 1) % 3
+        this.setPlayMode(mode)
+        let list = null
+        if (mode === playMode.random) {
+          list = shuffle(this.sequenceList)
+        } else {
+          list = this.sequenceList
+        }
+        this.resetCurrentIndex(list)
+        this.setPlaylist(list)
+      },
+      resetCurrentIndex(list) {
+        let index = list.findIndex((item) => {
+          return item.id === this.currentSong.id
+        })
+        this.setCurrentIndex(index)
+      },
+      _pad(num, n = 2) {
         let len = num.toString().length
         while (len < n) {
           num = '0' + num
@@ -220,11 +273,20 @@
       ...mapMutations({
         setFullScreen: 'SET_FULL_SCREEN',
         setPlayingState: 'SET_PLAYING_STATE',
-        setCurrentIndex: 'SET_CURRENT_INDEX'
+        setCurrentIndex: 'SET_CURRENT_INDEX',
+        setPlayMode: 'SET_PLAY_MODE',
+        setPlaylist: 'SET_PLAYLIST'
       })
     },
+    components: {
+      ProgressBar,
+      ProgressCircle
+    },
     watch: {
-      currentSong() {
+      currentSong(newSong, oldSong) {
+        if (newSong.id === oldSong.id) {
+          return
+        }
         this.$nextTick(() => {
           this.$refs.audio.play()
         })

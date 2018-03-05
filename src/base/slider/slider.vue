@@ -44,7 +44,6 @@
         }
       }, 20)
       window.addEventListener('resize', () => {
-        console.log(1)
         if (!this.slider) {
           return
         }
