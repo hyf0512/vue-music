@@ -14,7 +14,7 @@ export function getRecommend() {
 }
 
 export function getDiscList() {
-  const url = 'api/getDiscList1'
+  const url = 'api/getRecommend'
   const data = Object.assign({}, commonParams, {
     platform: 'yqq',
     loginUin: 0,
@@ -26,6 +26,27 @@ export function getDiscList() {
   return axios.get(url, {
     params: data
   }).then((res) => {
+    return Promise.resolve((res.data))
+  })
+}
+
+export function getDiscItem(id) {
+  const url = 'api/getDisc'
+  const data = Object.assign({}, commonParams, {
+    type: 1,
+    utf8: 1,
+    onlysong: 0,
+    disstid: id,
+    platform: 'yqq',
+    loginUin: 0,
+    hostUin: 0,
+    needNewCode: 0,
+    formate: 'jsonp'
+  })
+  return axios.get(url, {
+    params: data
+  }).then((res) => {
+    console.log(res)
     return Promise.resolve((res.data))
   })
 }

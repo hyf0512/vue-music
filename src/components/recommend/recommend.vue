@@ -12,15 +12,15 @@
           </slider>
         </div>
         <div class="recommend-list">
-          <h1 class="list-title">热门电台推荐</h1>
+          <h1 class="list-title">热门歌单推荐</h1>
           <ul>
-            <li v-for="item in discList" class="item" :key="item.key">
+            <li @click="selectItem(item)" v-for="item in discList" class="item" :key="item.key">
               <div class="icon">
-                <img width="60" height="60" v-lazy="item.radioImg">
+                <img width="60" height="60" v-lazy="item.cover">
               </div>
               <div class="text">
-                <h2 class="name">{{item.radioName}}</h2>
-                <p class="desc">播放量：{{parseFloat(item.listenNum / 10000).toFixed(1)}}万</p>
+                <h2 class="name">{{item.title}}</h2>
+                <p class="desc">播放量：{{parseFloat(item.listen_num / 10000).toFixed(1)}}万</p>
               </div>
             </li>
           </ul>
@@ -30,6 +30,7 @@
         <loading></loading>
       </div>
     </scroll>
+    <router-view></router-view>
   </div>
 </template>
 <script type="text/ecmascript-6">
@@ -39,6 +40,7 @@
 	import {getRecommend, getDiscList} from '@/api/recommend'
   import {ERR_OK} from '@/api/config'
   import {playlistMixin} from '@/common/js/mixin'
+  import {mapMutations} from 'vuex'
 	export default {
     mixins: [playlistMixin],
     data() {
@@ -63,6 +65,12 @@
         this.$refs.recommend.style.bottom = bottom
         this.$refs.scroll.refresh()
       },
+      selectItem(item) {
+        this.$router.push({
+          path: `/recommend/${item.content_id}`
+        })
+        this.setDisc(item)
+      },
 			_getRecommend() {
 				getRecommend().then((res) => {
           if (res.code === ERR_OK) {
@@ -73,7 +81,7 @@
       _getDiscList() {
         getDiscList().then((res) => {
           if (res.code === ERR_OK) {
-            //this.discList = res.data.data.groupList[0].radioList
+            this.discList = res.recomPlaylist.data.v_hot
           }
         })
       },
@@ -82,7 +90,10 @@
           this.$refs.scroll.refresh()
           this.checkLoaded = true
         }
-      }
+      },
+      ...mapMutations({
+        setDisc: 'SET_DISC'
+      })
 		}
 	}
 </script>
