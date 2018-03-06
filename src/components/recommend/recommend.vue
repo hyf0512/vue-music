@@ -38,7 +38,9 @@
   import Loading from '@/base/loading/loading'
 	import {getRecommend, getDiscList} from '@/api/recommend'
   import {ERR_OK} from '@/api/config'
+  import {playlistMixin} from '@/common/js/mixin'
 	export default {
+    mixins: [playlistMixin],
     data() {
       return {
         recommends: [],
@@ -56,6 +58,11 @@
       Loading
     },
 		methods: {
+      handlePlaylist(playlist) {
+        const bottom = playlist.length > 0 ? '60px' : ''
+        this.$refs.recommend.style.bottom = bottom
+        this.$refs.scroll.refresh()
+      },
 			_getRecommend() {
 				getRecommend().then((res) => {
           if (res.code === ERR_OK) {
@@ -66,7 +73,7 @@
       _getDiscList() {
         getDiscList().then((res) => {
           if (res.code === ERR_OK) {
-            this.discList = res.data.data.groupList[0].radioList
+            //this.discList = res.data.data.groupList[0].radioList
           }
         })
       },
