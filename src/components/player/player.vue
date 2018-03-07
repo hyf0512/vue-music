@@ -108,7 +108,8 @@
         currentLyric: null,
         currentLineNum: 0,
         currentShow: 'cd',
-        playingLyric: ''
+        playingLyric: '',
+        scrolledY: false
       }
     },
     computed: {
@@ -324,8 +325,10 @@
         const deltaX = touch.pageX - this.touch.startX
         const deltaY = touch.pageY - this.touch.startY
         if (Math.abs(deltaY) > Math.abs(deltaX)) {
+          this.scrolledY = true
           return
         }
+        this.scrolledY = false
         const left = this.currentShow === 'cd' ? 0 : -window.innerWidth
         const offsetwidth = Math.min(0, Math.max(-window.innerWidth, left + deltaX))
         this.touch.percent = Math.abs(offsetwidth / window.innerWidth)
@@ -335,9 +338,12 @@
         this.$refs.middleL.style[transitionDuration] = 0
       },
       middleTouchEnd(e) {
+        if (this.scrolledY) {
+          return
+        }
         let offsetwidth
         let opacity
-        if (this.currentShow === 'cd') {
+        if (this.currentShow === 'cd' && !this.scrolledY) {
           if (this.touch.percent > 0.1) {
             offsetwidth = -window.innerWidth
             opacity = 0
@@ -347,7 +353,7 @@
             opacity = 1
           }
         } else {
-          if (this.touch.percent < 0.9) {
+          if (this.touch.percent < 0.9 && !this.scrolledY) {
             offsetwidth = 0
             this.currentShow = 'cd'
             opacity = 1
