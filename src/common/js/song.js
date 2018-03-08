@@ -32,8 +32,9 @@ export default class Song {
 }
 
 export function createSong(musicData) {
-	var vkey = ''
-	return getSongKey(musicData.strMediaMid).then((res) => {
+	let vkey = ''
+  let id = musicData.strMediaMid || musicData.songmid
+	return getSongKey(id).then((res) => {
 		vkey = res.data.items[0].vkey
 		return new Song({
 			id: musicData.songid,
