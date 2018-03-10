@@ -1,7 +1,7 @@
 import * as types from './mutation-types'
 import {playMode} from '@/common/js/config'
 import {shuffle} from '@/common/js/util'
-import {saveSearch, deleteSearch, clearSearch} from '../common/js/cache'
+import {saveSearch, deleteSearch, clearSearch, savePlay, saveFavorite, deleteFavorite} from '../common/js/cache'
 
 function findIndex(list, song) {
 	return list.findIndex((item) => {
@@ -37,7 +37,6 @@ export const insertSong = function ({commit, state}, song) {
   let playlist = state.playlist.slice()
   let sequenceList = state.sequenceList.slice()
   let currentIndex = state.currentIndex
-
   let currentSong = playlist[currentIndex]
   let fpIndex = findIndex(playlist, song)
   currentIndex++
@@ -52,7 +51,7 @@ export const insertSong = function ({commit, state}, song) {
   }
   let currentSIndex = findIndex(sequenceList, currentSong) + 1
   let fsIndex = findIndex(sequenceList, song)
-  sequenceList.splice(currentSong, 0, song)
+  sequenceList.splice(currentSIndex, 0, song)
   if (fsIndex > -1) {
     if (currentSIndex > fsIndex) {
       sequenceList.splice(fsIndex, 1)
@@ -105,4 +104,16 @@ export const deleteSongList = function({commit}) {
   commit(types.SET_SEQUENCE_LIST, [])
   commit(types.SET_CURRENT_INDEX, -1)
   commit(types.SET_PLAYING_STATE, false)
+}
+
+export const savePlayHistory = function ({commit}, song) {
+  commit(types.SET_PLAY_HISTORY, savePlay(song))
+}
+
+export const saveFavoriteList = function ({commit}, song) {
+  commit(types.SET_FAVORITE_LIST, saveFavorite(song))
+}
+
+export const deleteFavoriteList = function ({commit}, song) {
+  commit(types.SET_FAVORITE_LIST, deleteFavorite(song))
 }
